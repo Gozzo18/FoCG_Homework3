@@ -29,7 +29,6 @@
 #include "yocto_pathtrace.h"
 
 #include <yocto/yocto_shape.h>
-#include <iostream>
 #include <atomic>
 #include <deque>
 #include <future>
@@ -286,56 +285,30 @@ static std::pair<vec3f, vec3f> eval_element_tangents(
 static vec3f eval_normalmap(
     const ptr::object* object, int element, const vec2f& uv) {
   // YOUR CODE GOES HERE ------------------------------------------
-
- if (object->material->normal_tex &&(!object->shape->triangles.empty())) {
-    auto normalmap = -1 + 2 * eval_texture(object->material->normal_tex, uv, true);
-    auto z      = eval_normal(object, element, uv);
-    auto basis  = identity3x3f;
-    auto flip_v = false;
-    auto t = object->shape->triangles[element];
-    auto tangents = triangle_tangents_fromuv(object->shape->positions[t.x], object->shape->positions[t.y], object->shape->positions[t.z], object->shape->texcoords[t.x], object->shape->texcoords[t.y], object->shape->texcoords[t.z]);
-    auto x        = orthonormalize(tangents.first, z);
-    auto y        = normalize(cross(z, x));
-    basis         = {x, y, z};
-    flip_v        = dot(y, tangents.second) < 0;
-    normalmap.y *= flip_v ? 1 : -1;  // flip vertical axis
-    z = normalize(basis * normalmap);
-    return z;
- }else{
-   return eval_normal(object, element, uv);
- }
-
-
-  /*if(object->material->normal_tex &&(!object->shape->triangles.empty())) {
-    auto normalmap = -1 + 2 * eval_texture(object->material->normal_tex, uv, true);
-    auto basis = identity3x3f;
-    auto z = eval_normal(object, element, uv);
-    auto flip_v = false;
-
-    auto tangents = std::pair{zero3f, zero3f};
-    if (!object->shape->triangles.empty()) {
-      auto t = object->shape->triangles[element];
-      if (object->shape->texcoords.empty()) {
-        tangents = triangle_tangents_fromuv(object->shape->positions[t.x], object->shape->positions[t.y], object->shape->positions[t.z], {0, 0}, {1, 0}, {0, 1});
-      } else {
-        tangents = triangle_tangents_fromuv(object->shape->positions[t.x], object->shape->positions[t.y], object->shape->positions[t.z], object->shape->texcoords[t.x], object->shape->texcoords[t.y], object->shape->texcoords[t.z]);
-      }
-    }
-
-    auto p = eval_position(object, element, uv);
-    auto x = orthonormalize(tangents.first, z);
-    auto y = normalize(cross(z, x));
-    flip_v = dot(y, tangents.second) < 0;
-    basis = {x,y,z};
-    normalmap.y *= flip_v ? 1 : -1;  // flip vertical axis
-    //auto tangent_frame = transform_normal({x, y, z, p}, normalmap);
-    //tangent_frame = normalize(tangent_frame * normalmap);
-    //z = normalize(tangent_frame * normalmap);
-    z = normalize(basis*normalmap);
-    return transform_normal(object->frame, z);
-  }else{
-    return eval_normal(object, element, uv);
-  }*/
+  //Extract texture coordinates
+  auto texcoord = eval_texcoord(object, element, uv);
+  //Comput normal mapping from texture
+  auto normalmap = -1 + 2 * eval_texture(object->material->normal_tex, texcoord, true);
+  //Compute shape normals
+  auto z = eval_normal(object, element, uv);
+  auto flip_v = false;
+  //Extract current triangle shape
+  auto t = object->shape->triangles[element];
+  //Compute tangents from shape
+  auto tangents = triangle_tangents_fromuv(object->shape->positions[t.x], object->shape->positions[t.y], object->shape->positions[t.z], object->shape->texcoords[t.x], object->shape->texcoords[t.y], object->shape->texcoords[t.z]);
+  
+  //Retrieve components for the tangent frame
+  //Fixrst element
+  auto x = orthonormalize(tangents.first, z);
+  //Second element
+  auto y = normalize(cross(z, x));
+  //Fourth element
+  auto position = eval_position(object, element, uv);
+  flip_v = dot(y, tangents.second) < 0;
+  normalmap.y *= flip_v ? 1 : -1;  // flip vertical axis
+  //Tangent frame
+  auto tangent_frame = transform_normal(frame3f{x, y, z, position},normalmap);
+  return tangent_frame ;
 }
 
 // Eval shading normal
