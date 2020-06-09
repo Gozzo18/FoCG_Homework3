@@ -1,4 +1,4 @@
-# Yocto/Pathtrace: Tiny Path Tracer
+# Homework 3 - Yocto/Pathtrace: Tiny Path Tracer
 
 In this homework, you will learn how to build a simple path tracer with support
 for subdivision surfaces, displacement and subsurface scattering. 
@@ -82,12 +82,3 @@ will still get points if you add some more scenes to the renderer.
           [3DModelHaven](https://3dmodelhaven.com) and make it complex
           using many models and all textures
     - also include license files for everything you download
-
-## Submission
-
-To submit the homework, you need to pack a ZIP file that contains the code 
-you write and the images it generates, i.e. the ZIP _with only the 
-`yocto_pathtrace/` and `out/` directories_.
-The file should be called `<lastname>_<firstname>_<studentid>.zip` 
-(`<cognome>_<nome>_<matricola>.zip`) and you should exclude 
-all other directories. Send it on Google Classroom.
